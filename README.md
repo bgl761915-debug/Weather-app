@@ -44,7 +44,7 @@ Pillow
 ## 🚀 How to Run
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/Weather-app.git
+git clone https://github.com/bgl761915-debug/Weather-app.git
 cd Weather-app
 
 python3 -m venv .venv
