@@ -1,1 +1,21 @@
-# Weather-app
+# Weather App (Tkinter)
+
+A simple desktop weather application built with Python and Tkinter.  
+It fetches real-time weather data using the WeatherAPI.com service.
+
+---
+
+## Features
+- Enter any city name
+- Displays:
+  - Temperature (°C)
+  - Weather condition
+  - Humidity
+  - Wind speed
+- Clean and simple GUI
+
+---
+
+## Setup
+
+### 1. Clone the repository
