@@ -19,3 +19,11 @@ It fetches real-time weather data using the WeatherAPI.com service.
 ## Setup
 
 ### 1. Clone the repository
+
+### 2. Create a virtual environment
+
+### 3. Install dependencies
+
+### 4. Add your API key
+Edit `weather_app.py` and replace:
+
