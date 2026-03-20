@@ -27,4 +27,4 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 ## Run the app
-python weather_app.py
+python main.py
