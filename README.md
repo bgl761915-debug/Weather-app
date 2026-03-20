@@ -16,8 +16,8 @@ It uses the free wttr.in weather service, so **no API key is required**.
 ## Setup
 
 ### 1. Clone the repo
-git clone https://github.com/YOUR_USERNAME/weather-app
-cd weather-app
+git clone https://github.com/bgl761915-debug/Weather-app.git
+
 
 ### 2. Create a virtual environment
 python3 -m venv .venv
