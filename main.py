@@ -5,33 +5,52 @@ from PIL import Image, ImageTk, ImageSequence
 import io
 import threading
 
-API_KEY = "YOUR_API_KEY_HERE"  # <--- PUT YOUR KEY HERE
-BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
+# -----------------------------
+# Weather assets (GIFs + backgrounds)
+# -----------------------------
 
 BG_IMAGES = {
-    "Clear": "https://i.imgur.com/7uZpQqH.jpg",
-    "Clouds": "https://i.imgur.com/6pQ0pQH.jpg",
-    "Rain": "https://i.imgur.com/1pQ0pQH.jpg",
-    "Drizzle": "https://i.imgur.com/1pQ0pQH.jpg",
-    "Thunderstorm": "https://i.imgur.com/4pQ0pQH.jpg",
-    "Snow": "https://i.imgur.com/5pQ0pQH.jpg",
-    "Mist": "https://i.imgur.com/6pQ0pQH.jpg",
-    "Fog": "https://i.imgur.com/6pQ0pQH.jpg",
-    "Haze": "https://i.imgur.com/6pQ0pQH.jpg",
+    "clear": "https://i.imgur.com/7uZpQqH.jpg",
+    "clouds": "https://i.imgur.com/6pQ0pQH.jpg",
+    "rain": "https://i.imgur.com/1pQ0pQH.jpg",
+    "snow": "https://i.imgur.com/5pQ0pQH.jpg",
+    "fog": "https://i.imgur.com/6pQ0pQH.jpg",
+    "storm": "https://i.imgur.com/4pQ0pQH.jpg",
 }
 
 ICON_GIFS = {
-    "Clear": "https://i.imgur.com/5Z3p0yP.gif",
-    "Clouds": "https://i.imgur.com/1Z3p0yP.gif",
-    "Rain": "https://i.imgur.com/2Z3p0yP.gif",
-    "Drizzle": "https://i.imgur.com/2Z3p0yP.gif",
-    "Thunderstorm": "https://i.imgur.com/3Z3p0yP.gif",
-    "Snow": "https://i.imgur.com/4Z3p0yP.gif",
-    "Mist": "https://i.imgur.com/1Z3p0yP.gif",
-    "Fog": "https://i.imgur.com/1Z3p0yP.gif",
-    "Haze": "https://i.imgur.com/1Z3p0yP.gif",
+    "clear": "https://i.imgur.com/5Z3p0yP.gif",
+    "clouds": "https://i.imgur.com/1Z3p0yP.gif",
+    "rain": "https://i.imgur.com/2Z3p0yP.gif",
+    "snow": "https://i.imgur.com/4Z3p0yP.gif",
+    "fog": "https://i.imgur.com/1Z3p0yP.gif",
+    "storm": "https://i.imgur.com/3Z3p0yP.gif",
 }
 
+# -----------------------------
+# Weather code mapping
+# -----------------------------
+
+def map_weather_code(code: int):
+    if code == 0:
+        return "clear", "Clear sky"
+    if code in (1, 2, 3):
+        return "clouds", "Partly cloudy" if code in (1, 2) else "Overcast"
+    if code in (45, 48):
+        return "fog", "Foggy"
+    if code in (51, 53, 55, 56, 57):
+        return "rain", "Drizzle"
+    if code in (61, 63, 65, 66, 67, 80, 81, 82):
+        return "rain", "Rain"
+    if code in (71, 73, 75, 77, 85, 86):
+        return "snow", "Snow"
+    if code in (95, 96, 99):
+        return "storm", "Thunderstorm"
+    return "clouds", "Cloudy"
+
+# -----------------------------
+# Animated GIF loader
+# -----------------------------
 
 class AnimatedIcon:
     def __init__(self, label):
@@ -53,7 +72,7 @@ class AnimatedIcon:
         except Exception:
             self.frames = []
 
-    def start(self, delay=100):
+    def start(self, delay=120):
         if not self.frames:
             self.label.config(image="")
             return
@@ -72,22 +91,59 @@ class AnimatedIcon:
         self.current = (self.current + 1) % len(self.frames)
         self.label.after(delay, lambda: self._animate(delay))
 
+# -----------------------------
+# API calls (Open‑Meteo)
+# -----------------------------
 
-def get_weather(city):
-    params = {"q": city, "appid": API_KEY, "units": "metric"}
-    resp = requests.get(BASE_URL, params=params, timeout=10)
-    data = resp.json()
-    if data.get("cod") != 200:
+def geocode_city(name: str):
+    url = "https://geocoding-api.open-meteo.com/v1/search"
+    params = {"name": name, "count": 1}
+    r = requests.get(url, params=params, timeout=10)
+    data = r.json()
+    results = data.get("results")
+    if not results:
         return None
+    res = results[0]
     return {
-        "temp": data["main"]["temp"],
-        "condition": data["weather"][0]["main"],
-        "description": data["weather"][0]["description"].title(),
-        "feels_like": data["main"]["feels_like"],
-        "humidity": data["main"]["humidity"],
-        "wind": data["wind"]["speed"],
+        "lat": res["latitude"],
+        "lon": res["longitude"],
+        "name": res["name"],
+        "country": res.get("country", ""),
     }
 
+def get_weather(city: str):
+    geo = geocode_city(city)
+    if not geo:
+        return None
+
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": geo["lat"],
+        "longitude": geo["lon"],
+        "current_weather": True,
+    }
+    r = requests.get(url, params=params, timeout=10)
+    data = r.json()
+    current = data.get("current_weather")
+    if not current:
+        return None
+
+    code = int(current["weathercode"])
+    cond_key, desc = map_weather_code(code)
+
+    return {
+        "city": geo["name"],
+        "country": geo["country"],
+        "temp": current["temperature"],
+        "wind": current["windspeed"],
+        "code": code,
+        "condition_key": cond_key,
+        "description": desc,
+    }
+
+# -----------------------------
+# Image fetch helper
+# -----------------------------
 
 def fetch_image(url, size=None):
     try:
@@ -99,6 +155,9 @@ def fetch_image(url, size=None):
     except Exception:
         return None
 
+# -----------------------------
+# Main UI class
+# -----------------------------
 
 class WeatherApp:
     def __init__(self, root):
@@ -110,6 +169,7 @@ class WeatherApp:
         self.root.geometry("480x640")
         self.root.resizable(False, False)
 
+        # Colors
         self.dark_bg = "#101820"
         self.dark_card = "#182430"
         self.dark_fg = "#F5F5F5"
@@ -117,12 +177,15 @@ class WeatherApp:
         self.light_card = "#FFFFFF"
         self.light_fg = "#101820"
 
+        # Background canvas
         self.canvas = tk.Canvas(root, highlightthickness=0)
         self.canvas.pack(fill="both", expand=True)
 
+        # Rounded card
         self.card = tk.Frame(self.canvas, bd=0)
         self.card.place(relx=0.5, rely=0.5, anchor="center", width=380, height=520)
 
+        # Widgets
         self.title_label = tk.Label(self.card, text="Weather", font=("Segoe UI", 22, "bold"))
         self.city_entry = ttk.Entry(self.card, font=("Segoe UI", 14))
         self.search_btn = ttk.Button(self.card, text="Get Weather", command=self.on_search)
@@ -136,6 +199,7 @@ class WeatherApp:
 
         self.theme_btn = ttk.Button(self.card, text="Dark / Light", command=self.toggle_theme)
 
+        # Layout
         self.title_label.pack(pady=(20, 10))
         self.city_entry.pack(pady=5, ipadx=5, ipady=5)
         self.search_btn.pack(pady=5)
@@ -146,7 +210,11 @@ class WeatherApp:
         self.theme_btn.pack(side="bottom", pady=15)
 
         self.apply_theme()
-        self.set_background("Clear")
+        self.set_background("clear")
+
+    # -----------------------------
+    # Theme
+    # -----------------------------
 
     def apply_theme(self):
         if self.dark_mode:
@@ -156,8 +224,11 @@ class WeatherApp:
 
         self.canvas.configure(bg=bg)
         self.card.configure(bg=card)
-        for w in (self.title_label, self.loading_label, self.result_label, self.extra_label, self.icon_label):
-            w.configure(bg=card, fg=fg if w is not self.icon_label else None)
+
+        for w in (self.title_label, self.loading_label, self.result_label, self.extra_label):
+            w.configure(bg=card, fg=fg)
+
+        self.icon_label.configure(bg=card)
 
         style = ttk.Style()
         style.theme_use("clam")
@@ -169,18 +240,28 @@ class WeatherApp:
         self.dark_mode = not self.dark_mode
         self.apply_theme()
 
-    def set_background(self, condition):
-        url = BG_IMAGES.get(condition, BG_IMAGES["Clouds"])
+    # -----------------------------
+    # Background
+    # -----------------------------
+
+    def set_background(self, condition_key):
+        url = BG_IMAGES.get(condition_key, BG_IMAGES["clouds"])
         img = fetch_image(url, size=(480, 640))
         if img:
             self.bg_image = img
             self.canvas.create_image(0, 0, anchor="nw", image=self.bg_image)
-        else:
-            self.canvas.configure(bg=self.dark_bg if self.dark_mode else self.light_bg)
+
+    # -----------------------------
+    # Loading state
+    # -----------------------------
 
     def set_loading(self, is_loading):
         self.loading_label.config(text="Loading..." if is_loading else "")
         self.search_btn.config(state="disabled" if is_loading else "normal")
+
+    # -----------------------------
+    # Search
+    # -----------------------------
 
     def on_search(self):
         city = self.city_entry.get().strip()
@@ -201,9 +282,13 @@ class WeatherApp:
             data = get_weather(city)
         except Exception:
             data = None
-        self.root.after(0, lambda: self.update_ui(city, data))
+        self.root.after(0, lambda: self.update_ui(data))
 
-    def update_ui(self, city, data):
+    # -----------------------------
+    # UI update
+    # -----------------------------
+
+    def update_ui(self, data):
         self.set_loading(False)
 
         if not data:
@@ -211,22 +296,27 @@ class WeatherApp:
             self.extra_label.config(text="")
             return
 
-        condition = data["condition"]
-        self.set_background(condition)
+        cond_key = data["condition_key"]
+        self.set_background(cond_key)
+
+        location = data["city"]
+        if data["country"]:
+            location += f", {data['country']}"
 
         self.result_label.config(
-            text=f"{city.title()}\n{data['temp']}°C\n{data['description']}"
+            text=f"{location}\n{data['temp']}°C\n{data['description']}"
         )
         self.extra_label.config(
-            text=f"Feels like: {data['feels_like']}°C\n"
-                 f"Humidity: {data['humidity']}%\n"
-                 f"Wind: {data['wind']} m/s"
+            text=f"Wind: {data['wind']} km/h\nCode: {data['code']}"
         )
 
-        gif_url = ICON_GIFS.get(condition, ICON_GIFS["Clouds"])
+        gif_url = ICON_GIFS.get(cond_key, ICON_GIFS["clouds"])
         self.animated_icon.load_from_url(gif_url)
-        self.animated_icon.start(delay=120)
+        self.animated_icon.start()
 
+# -----------------------------
+# Run app
+# -----------------------------
 
 if __name__ == "__main__":
     root = tk.Tk()
