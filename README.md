@@ -1,23 +1,20 @@
-# 🌤️ Weather App — Animated, Modern, No Login Needed
+# 🌤️ Weather App — Modern, No Login Needed
 
-A modern Python weather application powered by **Open‑Meteo**, a free weather service that requires:
+A clean and modern Python weather application powered by **Open‑Meteo**, a free weather service that requires:
 
 - **No login**
 - **No account**
 - **No API key**
 - **No rate limits for normal use**
 
-This app is designed to look clean, animated, and visually impressive while staying lightweight and easy to run.
+This app is designed to be simple, fast, and easy to run.
 
 ---
 
 ## ✨ Features
 
-- 🔥 **Animated weather icons (GIFs)**
 - 🌗 **Dark / Light mode toggle**
-- 🖼️ **Background image changes with the weather**
 - 🎨 **Rounded, card‑style UI**
-- ⚡ **Loading animation while fetching**
 - 🌍 **City search with automatic geocoding**
 - 📡 **Live weather from Open‑Meteo**
 - 🧭 **No login or API key required**
@@ -56,7 +53,7 @@ python main.py
 ```
 
 A window will open.  
-Type a city (e.g., **Brisbane**) → click **Get Weather** → animated icon + background appear.
+Type a city (e.g., **Brisbane**) → click **Get Weather** → weather info appears.
 
 ---
 
@@ -85,11 +82,7 @@ The API returns:
 - Weather code  
 - Time  
 
-The app maps the **weather code** to:
-
-- A human‑readable description  
-- An animated GIF icon  
-- A matching background image  
+The app maps the **weather code** to a human‑readable description.
 
 ---
 
@@ -107,11 +100,8 @@ Weather-app/
 ## 🎨 UI Features
 
 - **Rounded card layout** for a modern look  
-- **Canvas background** that updates dynamically  
 - **Dark/Light mode** toggle  
-- **Smooth GIF animation** using PIL  
 - **Threaded network requests** so the UI never freezes  
-- **Loading indicator** while fetching weather  
 
 ---
 
@@ -119,10 +109,8 @@ Weather-app/
 
 You can easily modify:
 
-- Animated GIF URLs  
-- Background image URLs  
 - Colors, fonts, and layout  
-- Weather code mappings  
+- Weather code descriptions  
 - Add hourly or daily forecast panels  
 - Add location auto‑detect  
 
@@ -134,4 +122,4 @@ This project is open-source and free to use.
 
 ---
 
-Enjoy your animated, modern, no‑login weather app! 🌤️
+Enjoy your modern, no‑login weather app! 🌤️
