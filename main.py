@@ -1,34 +1,30 @@
 import tkinter as tk
 import requests
 
-API_KEY = "YOUR_API_KEY_HERE"  # Replace with your WeatherAPI.com key
-
 def get_weather():
     city = entry_city.get().strip()
     if not city:
         label_status.config(text="Please enter a city.")
         return
 
-    url = f"http://api.weatherapi.com/v1/current.json?key={API_KEY}&q={city}"
+    url = f"https://wttr.in/{city}?format=j1"
 
     try:
         resp = requests.get(url, timeout=5)
         data = resp.json()
 
-        if "error" in data:
-            label_status.config(text=f"Error: {data['error']['message']}")
-            label_result.config(text="")
-            return
+        area = data["nearest_area"][0]["areaName"][0]["value"]
+        region = data["nearest_area"][0]["region"][0]["value"]
+        country = data["nearest_area"][0]["country"][0]["value"]
 
-        location = data["location"]["name"]
-        country = data["location"]["country"]
-        temp_c = data["current"]["temp_c"]
-        condition = data["current"]["condition"]["text"]
-        humidity = data["current"]["humidity"]
-        wind_kph = data["current"]["wind_kph"]
+        current = data["current_condition"][0]
+        temp_c = current["temp_C"]
+        condition = current["weatherDesc"][0]["value"]
+        humidity = current["humidity"]
+        wind_kph = current["windspeedKmph"]
 
         result_text = (
-            f"{location}, {country}\n"
+            f"{area}, {region}, {country}\n"
             f"Temperature: {temp_c} °C\n"
             f"Condition: {condition}\n"
             f"Humidity: {humidity}%\n"
@@ -42,7 +38,7 @@ def get_weather():
         label_result.config(text="")
 
 root = tk.Tk()
-root.title("Weather App")
+root.title("Weather App (No API Key Needed)")
 
 frame = tk.Frame(root, padx=10, pady=10)
 frame.pack()
